@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 /* ─────────────────────────── DATA ─────────────────────────── */
 const PRODUCTS = [
@@ -78,6 +78,144 @@ function ProductCard({ product, onAdd }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─────────────────────────── CHATBOT ─────────────────────── */
+const BOT_RESPONSES = {
+  default: ["I'm here to help you find the perfect eyewear! 😊 Ask me about frames, lenses, or prices.", "Great question! Let me help you explore our collection.", "I'd love to help! Could you tell me more about what you're looking for?"],
+  price:   ["We have frames starting from Rs.999! Our bestsellers range from Rs.1499 to Rs.4299. All come with free delivery 🚚", "Great news — we have options for every budget! Frames from Rs.999 to Rs.7999."],
+  frame:   ["We carry Rectangle, Round, Aviator, Cat-Eye, Wayfarer and Hexagonal styles. Which shape suits your face? 😎", "Our most popular are Rectangle and Round frames. Want me to suggest based on your face shape?"],
+  lens:    ["We offer Single Vision, Bifocal, Progressive and Blue-Cut lenses. All certified with 1-year warranty! 💯", "Our anti-blue light lenses are a bestseller for screen users. Would you like to know more?"],
+  offer:   ["Use code LENSORA20 for 20% off! Also, Buy 1 Get 1 FREE on all eyeglasses right now! 🎉", "We have amazing deals — B1G1 FREE + free delivery above Rs.999. Use LENSORA20 for extra 20% off!"],
+  tryon:   ["Our 3D Virtual Try-On lets you see how any frame looks on your face in real time! Click '3D Try-On' in the navbar 🔬", "Yes! Just click '3D Try-On' and your camera will let you virtually try any frame. Super accurate AI!"],
+  delivery:["We deliver in 24–48 hours across India! Free delivery on orders above Rs.999 🚚", "Express delivery in 24-48 hrs. Free shipping above Rs.999!"],
+  brand:   ["We carry Ray-Ban, Oakley, Vogue, Titan, Tommy Hilfiger, Vincent Chase and more! 👑", "Top brands like Ray-Ban, Oakley, Fastrack and our own premium Lensora Air collection!"],
+};
+
+const SUGGESTIONS = ['Best sellers', 'Frame shapes', 'Current offers', 'Blue light lenses', 'Try-On feature', 'Delivery info'];
+
+function getResponse(text) {
+  const t = text.toLowerCase();
+  if (t.match(/price|cost|cheap|budget|afford|rs\.|rupee/))    return BOT_RESPONSES.price;
+  if (t.match(/frame|shape|style|rect|round|aviator|cat|way/)) return BOT_RESPONSES.frame;
+  if (t.match(/lens|bifocal|progressive|blue|light|power/))    return BOT_RESPONSES.lens;
+  if (t.match(/offer|deal|discount|coupon|sale|free|promo/))   return BOT_RESPONSES.offer;
+  if (t.match(/try|virtual|3d|camera|ar/))                     return BOT_RESPONSES.tryon;
+  if (t.match(/deliver|ship|fast|quick|courier/))              return BOT_RESPONSES.delivery;
+  if (t.match(/brand|rayban|oakley|titan|vogue|fastrack/))     return BOT_RESPONSES.brand;
+  return BOT_RESPONSES.default;
+}
+
+function Chatbot() {
+  const [open,     setOpen]     = useState(false);
+  const [messages, setMessages] = useState([
+    { role:'bot', text:'👋 Hi! I\'m Lensora\'s AI stylist. Ask me anything about frames, lenses, offers or delivery!', time: nowTime() },
+  ]);
+  const [input,    setInput]    = useState('');
+  const [typing,   setTyping]   = useState(false);
+  const [showDot,  setShowDot]  = useState(true);
+  const messagesEndRef = useRef(null);
+
+  function nowTime() {
+    return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  }
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior:'smooth' });
+  }, [messages, typing]);
+
+  const sendMessage = (text) => {
+    const msg = text || input.trim();
+    if (!msg) return;
+    setInput('');
+    setShowDot(false);
+    setMessages(prev => [...prev, { role:'user', text: msg, time: nowTime() }]);
+    setTyping(true);
+    setTimeout(() => {
+      const pool = getResponse(msg);
+      const reply = pool[Math.floor(Math.random() * pool.length)];
+      setTyping(false);
+      setMessages(prev => [...prev, { role:'bot', text: reply, time: nowTime() }]);
+    }, 1000 + Math.random() * 600);
+  };
+
+  return (
+    <>
+      {/* Floating Button */}
+      <button className={`chat-fab ${open ? 'open' : ''}`} onClick={() => setOpen(!open)} aria-label="Chat with us">
+        {!open ? (
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        ) : (
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        )}
+        {showDot && !open && <span className="chat-dot" />}
+      </button>
+
+      {/* Chat Window */}
+      <div className={`chat-window ${open ? 'open' : ''}`}>
+
+        {/* Header */}
+        <div className="chat-header">
+          <div className="chat-avatar">👓</div>
+          <div className="chat-header-info">
+            <div className="chat-bot-name">Lensora AI Stylist</div>
+            <div className="chat-bot-status">
+              <span className="status-dot" />
+              Online — here to help
+            </div>
+          </div>
+          <button className="chat-header-close" onClick={() => setOpen(false)}>✕</button>
+        </div>
+
+        {/* Quick suggestions */}
+        <div className="chat-suggestions">
+          {SUGGESTIONS.map((s, i) => (
+            <button key={i} className="suggestion-chip" onClick={() => sendMessage(s)}>{s}</button>
+          ))}
+        </div>
+
+        {/* Messages */}
+        <div className="chat-messages">
+          {messages.map((m, i) => (
+            <div key={i} className={`msg ${m.role}`}>
+              {m.role === 'bot' && <div className="msg-avatar">👓</div>}
+              <div>
+                <div className="msg-bubble">{m.text}</div>
+                <div className="msg-time">{m.time}</div>
+              </div>
+            </div>
+          ))}
+
+          {typing && (
+            <div className="msg bot">
+              <div className="msg-avatar">👓</div>
+              <div className="typing-indicator">
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="chat-input-area">
+          <button className="chat-mic" title="Voice input">🎤</button>
+          <input
+            className="chat-input"
+            placeholder="Ask about frames, lenses, offers..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && sendMessage()}
+          />
+          <button className="chat-send" onClick={() => sendMessage()}>
+            <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -399,6 +537,9 @@ export default function App() {
       <div className={`toast ${toast.show ? 'show' : ''}`}>
         {toast.msg}
       </div>
+
+      {/* CHATBOT */}
+      <Chatbot />
     </>
   );
 }
