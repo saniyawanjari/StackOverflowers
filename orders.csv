@@ -1,0 +1,7 @@
+OrderID,CustomerName,Product,Status,DeliveryDate
+1023,Vaidehi,Blue Frame Glasses,Shipped,28 Feb 2026
+1024,Rahul,Sunglasses,Delivered,25 Feb 2026
+1025,Ananya,Power Lens,Processing,2 Mar 2026
+1026,Arjun,Black Frame Glasses,Out for Delivery,27 Feb 2026
+1027,Sneha,Blue Light Glasses,Cancelled,26 Feb 2026
+1028,Karan,Sunglasses,Refund Initiated,1 Mar 2026
